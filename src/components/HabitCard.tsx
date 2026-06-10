@@ -135,8 +135,8 @@ export function HabitCard({
           </div>
         </div>
 
-        {/* Action buttons row */}
-        <div className="flex items-center gap-2 mt-3 justify-end relative z-10">
+        {/* Action buttons row — pr accounts for FAB so buttons don't hide behind it */}
+        <div className="flex items-center gap-2 mt-3 justify-end relative z-10 pr-16">
           {/* Skip button — only shown if skipsPerWeek > 0 */}
           {habit.skipsPerWeek > 0 && (
             <button
