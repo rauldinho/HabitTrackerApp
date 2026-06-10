@@ -33,23 +33,10 @@ export function Header({ onExport, onImport, darkMode, onToggleDark }: Props) {
         {/* Brand mark */}
         <div className="flex items-center gap-2.5">
           <div
-            className="w-10 h-10 bg-ink flex items-center justify-center flex-shrink-0 shadow-hard-sm relative overflow-hidden"
+            className="w-10 h-10 bg-ink flex items-center justify-center flex-shrink-0 shadow-hard-sm"
             style={{ borderRadius: '10px 4px 10px 4px / 4px 10px 4px 10px' }}
           >
-            {/* mini streak bars */}
-            <div className="flex items-end gap-[3px]">
-              <div className="w-[4px] bg-paper/40 rounded-sm" style={{ height: 8 }} />
-              <div className="w-[4px] bg-paper/60 rounded-sm" style={{ height: 12 }} />
-              <div className="w-[4px] bg-paper/80 rounded-sm" style={{ height: 9 }} />
-              <div className="w-[4px] bg-paper rounded-sm" style={{ height: 16 }} />
-            </div>
-            {/* checkmark overlay */}
-            <svg
-              className="absolute bottom-[5px] right-[5px]"
-              width="10" height="10" viewBox="0 0 10 10" fill="none"
-            >
-              <polyline points="1.5,5.5 4,8 8.5,2" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <span className="text-paper font-heading font-bold text-sm leading-none tracking-tight">HT</span>
           </div>
           <div>
             <h1
