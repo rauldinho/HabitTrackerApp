@@ -18,10 +18,14 @@ export type CompletionsMap = Record<string, Record<string, CompletionEntry>>
 // skips[habitId][dateStr] = {} — skipped days (don't break streak, don't count as done)
 export type SkipsMap = Record<string, Record<string, {}>>
 
+// failures[habitId][dateStr] = {} — explicitly marked as failed
+export type FailuresMap = Record<string, Record<string, {}>>
+
 export interface AppData {
   habits: Habit[]
   completions: CompletionsMap
   skips: SkipsMap
+  failures: FailuresMap
 }
 
 export const HABIT_COLORS = [

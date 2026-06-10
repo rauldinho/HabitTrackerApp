@@ -4,6 +4,7 @@ import { formatDateStr, isPast } from '../utils/dateUtils'
 interface Props {
   completions: Record<string, CompletionEntry>
   skips?: Record<string, {}>
+  failures?: Record<string, {}>
   habitColor: string
   createdAt: string
 }
@@ -23,7 +24,7 @@ function colorHex(bg: string): { done: string; missed: string } {
   return map[bg] ?? { done: '#6b7280', missed: '#d1d5db' }
 }
 
-export function WeekBar({ completions, skips = {}, habitColor, createdAt }: Props) {
+export function WeekBar({ completions, skips = {}, failures = {}, habitColor, createdAt }: Props) {
   const days: { dateStr: string; label: string; isToday: boolean }[] = []
   const now = new Date()
   for (let i = 13; i >= 0; i--) {
@@ -41,11 +42,12 @@ export function WeekBar({ completions, skips = {}, habitColor, createdAt }: Prop
   return (
     <div className="mt-3 flex gap-1">
       {days.map(({ dateStr, label, isToday }) => {
-        const done = dateStr in completions
+        const done    = dateStr in completions
         const skipped = dateStr in skips
-        const past = isPast(dateStr)
+        const failed  = dateStr in failures
+        const past    = isPast(dateStr)
         const beforeCreation = dateStr < createdAt
-        const missed = !done && !skipped && past && !beforeCreation
+        const missed  = !done && !skipped && !failed && past && !beforeCreation
 
         let bg: string
         let opacity = '1'
@@ -57,6 +59,10 @@ export function WeekBar({ completions, skips = {}, habitColor, createdAt }: Prop
         } else if (done) {
           bg = doneColor
           title = `${dateStr} ✓`
+        } else if (failed) {
+          bg = '#ef4444'
+          opacity = '0.8'
+          title = `${dateStr} ✕ failed`
         } else if (skipped) {
           bg = 'var(--color-muted)'
           opacity = '0.7'

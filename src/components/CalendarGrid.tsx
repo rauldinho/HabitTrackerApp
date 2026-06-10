@@ -1,4 +1,4 @@
-import { getDaysInMonth, getFirstWeekday, isPast, isToday, isFuture } from '../utils/dateUtils'
+import { getDaysInMonth, getFirstWeekday, isToday, isFuture } from '../utils/dateUtils'
 import { CompletionEntry } from '../types'
 
 function colorHex(bg: string): { done: string; missed: string } {
@@ -26,12 +26,16 @@ interface Props {
   month: number
   completions: Record<string, CompletionEntry>
   skips?: Record<string, {}>
+  failures?: Record<string, {}>
   habitColor: string
   createdAt: string
-  onToggleDate?: (dateStr: string) => void
+  /** Cycles: none → done → failed → none. Also un-skips a skipped day. */
+  onCycleDate?: (dateStr: string) => void
 }
 
-export function CalendarGrid({ year, month, completions, skips = {}, habitColor, createdAt, onToggleDate }: Props) {
+export function CalendarGrid({
+  year, month, completions, skips = {}, failures = {}, habitColor, createdAt, onCycleDate,
+}: Props) {
   const days = getDaysInMonth(year, month)
   const firstWeekday = getFirstWeekday(year, month)
   const { done: doneColor, missed: missedColor } = colorHex(habitColor)
@@ -54,45 +58,56 @@ export function CalendarGrid({ year, month, completions, skips = {}, habitColor,
         {Array.from({ length: firstWeekday }).map((_, i) => <div key={`e-${i}`} />)}
 
         {days.map(dateStr => {
-          const done = dateStr in completions
+          const done    = dateStr in completions
           const skipped = dateStr in skips
-          const today = isToday(dateStr)
-          const future = isFuture(dateStr)
+          const failed  = dateStr in failures
+          const today   = isToday(dateStr)
+          const future  = isFuture(dateStr)
           const beforeCreation = dateStr < createdAt
-          const missed = !done && !skipped && isPast(dateStr) && !beforeCreation
-          const dayNum = parseInt(dateStr.split('-')[2], 10)
-          const canToggle = !future && !beforeCreation && !!onToggleDate
+          const missed  = !done && !skipped && !failed && !today && !future && !beforeCreation
+          const dayNum  = parseInt(dateStr.split('-')[2], 10)
+          const canToggle = !future && !!onCycleDate
 
-          let bg = 'transparent'
-          let textColor = 'var(--color-ink)'
-          let opacity = future || beforeCreation ? '0.25' : '1'
+          let bg          = 'transparent'
+          let textColor   = 'var(--color-ink)'
+          let opacity     = future || beforeCreation ? '0.25' : '1'
           let borderStyle = '1px dashed var(--color-border)'
-          let shadow = 'none'
+          let shadow      = 'none'
 
           if (done) {
-            bg = doneColor
+            bg          = doneColor
             borderStyle = `2px solid var(--color-border)`
-            shadow = '2px 2px 0px 0px var(--color-border)'
-            textColor = '#fff'
+            shadow      = '2px 2px 0px 0px var(--color-border)'
+            textColor   = '#fff'
+          } else if (failed) {
+            bg          = '#ef4444'
+            borderStyle = `2px solid #b91c1c`
+            shadow      = '2px 2px 0px 0px #b91c1c'
+            textColor   = '#fff'
+            opacity     = '0.85'
           } else if (skipped) {
-            bg = 'var(--color-muted)'
+            bg          = 'var(--color-muted)'
             borderStyle = `1px solid var(--color-border)`
-            opacity = '0.75'
+            opacity     = '0.75'
           } else if (missed) {
-            bg = missedColor
-            opacity = '0.5'
+            bg          = missedColor
+            opacity     = '0.5'
             borderStyle = `1px solid var(--color-border)`
           } else if (today) {
             borderStyle = `2px solid var(--color-accent)`
-            textColor = 'var(--color-accent)'
+            textColor   = 'var(--color-accent)'
           }
 
           return (
             <button
               key={dateStr}
               disabled={!canToggle}
-              onClick={() => canToggle && onToggleDate!(dateStr)}
-              title={skipped ? `${dateStr} — skipped` : dateStr}
+              onClick={() => canToggle && onCycleDate!(dateStr)}
+              title={
+                skipped ? `${dateStr} — skipped` :
+                failed  ? `${dateStr} — failed`  :
+                done    ? `${dateStr} — done`     : dateStr
+              }
               className="font-body text-xs font-semibold h-8 w-full flex items-center justify-center transition-all active:scale-90 disabled:cursor-default relative overflow-hidden"
               style={{
                 backgroundColor: bg,
@@ -105,7 +120,6 @@ export function CalendarGrid({ year, month, completions, skips = {}, habitColor,
                   : '3px 8px 3px 8px / 8px 3px 8px 3px',
               }}
             >
-              {/* Diagonal stripes overlay for skipped days */}
               {skipped && (
                 <div
                   className="absolute inset-0 pointer-events-none"
@@ -114,17 +128,24 @@ export function CalendarGrid({ year, month, completions, skips = {}, habitColor,
                   }}
                 />
               )}
-              <span className="relative z-10">{skipped ? '—' : dayNum}</span>
+              <span className="relative z-10">
+                {skipped ? '—' : failed ? '✕' : dayNum}
+              </span>
             </button>
           )
         })}
       </div>
 
       <div className="flex items-center justify-between mt-2">
-        <p className="font-body text-[10px] text-ink/40">tap past days to edit</p>
-        {Object.keys(skips).filter(d => d.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`)).length > 0 && (
-          <p className="font-body text-[10px] text-ink/40">― = skipped</p>
-        )}
+        <p className="font-body text-[10px] text-ink/40">tap to cycle: done → failed → clear</p>
+        <div className="flex gap-2">
+          {Object.keys(skips).some(d => d.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`)) && (
+            <p className="font-body text-[10px] text-ink/40">― = skipped</p>
+          )}
+          {Object.keys(failures).some(d => d.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`)) && (
+            <p className="font-body text-[10px] text-ink/40">✕ = failed</p>
+          )}
+        </div>
       </div>
     </div>
   )

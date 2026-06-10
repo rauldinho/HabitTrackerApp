@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { v4 as uuidv4 } from 'uuid'
-import { AppData, Habit, CompletionsMap, SkipsMap } from '../types'
+import { AppData, Habit, CompletionsMap, SkipsMap, FailuresMap } from '../types'
 import { todayStr, getWeekDays } from '../utils/dateUtils'
 
 const STORAGE_KEY = 'habit-tracker-v1'
@@ -18,12 +18,13 @@ function loadData(): AppData {
       }))
       // Migrate: ensure skips map exists
       if (!parsed.skips) parsed.skips = {}
+      if (!parsed.failures) parsed.failures = {}
       return parsed
     }
   } catch {
     // corrupted — start fresh
   }
-  return { habits: [], completions: {}, skips: {} }
+  return { habits: [], completions: {}, skips: {}, failures: {} }
 }
 
 function saveData(data: AppData): void {
@@ -159,6 +160,41 @@ export function useHabits() {
     [data, persist],
   )
 
+  /**
+   * Cycle a calendar date: none → done → failed → none
+   * If currently skipped: removes skip and goes to none.
+   */
+  const cycleDate = useCallback(
+    (habitId: string, dateStr: string) => {
+      const completions = { ...(data.completions[habitId] ?? {}) }
+      const failures   = { ...(data.failures?.[habitId]   ?? {}) }
+      const skips      = { ...(data.skips?.[habitId]      ?? {}) }
+
+      if (dateStr in skips) {
+        // skipped → none (un-skip)
+        delete skips[dateStr]
+      } else if (dateStr in completions) {
+        // done → failed
+        delete completions[dateStr]
+        failures[dateStr] = {}
+      } else if (dateStr in failures) {
+        // failed → none
+        delete failures[dateStr]
+      } else {
+        // none → done
+        completions[dateStr] = {}
+      }
+
+      persist({
+        ...data,
+        completions: { ...data.completions, [habitId]: completions },
+        failures:    { ...(data.failures ?? {}), [habitId]: failures },
+        skips:       { ...(data.skips    ?? {}), [habitId]: skips },
+      })
+    },
+    [data, persist],
+  )
+
   const isTodayDone = useCallback(
     (habitId: string): boolean => {
       return todayStr() in (data.completions[habitId] ?? {})
@@ -169,6 +205,13 @@ export function useHabits() {
   const getCompletions = useCallback(
     (habitId: string): Record<string, { note?: string }> => {
       return data.completions[habitId] ?? {}
+    },
+    [data],
+  )
+
+  const getFailures = useCallback(
+    (habitId: string): Record<string, {}> => {
+      return data.failures?.[habitId] ?? {}
     },
     [data],
   )
@@ -262,6 +305,7 @@ export function useHabits() {
           const imported = JSON.parse(e.target?.result as string) as AppData
           if (imported.habits && imported.completions) {
             if (!imported.skips) imported.skips = {}
+            if (!imported.failures) imported.failures = {}
             persist(imported)
           }
         } catch {
@@ -277,6 +321,7 @@ export function useHabits() {
     habits: data.habits,
     completions: data.completions as CompletionsMap,
     skips: data.skips as SkipsMap,
+    failures: (data.failures ?? {}) as FailuresMap,
     addHabit,
     updateHabit,
     deleteHabit,
@@ -284,10 +329,12 @@ export function useHabits() {
     archiveHabit,
     toggleToday,
     toggleDate,
+    cycleDate,
     toggleSkip,
     isTodayDone,
     getCompletions,
     getSkips,
+    getFailures,
     getWeekSkipInfo,
     canSkipDate,
     exportData,

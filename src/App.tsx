@@ -42,9 +42,10 @@ interface SortableCardProps {
   habit: Habit
   completions: Record<string, CompletionEntry>
   skips: Record<string, {}>
+  failures: Record<string, {}>
   isTodayDone: boolean
   onToggleToday: () => void
-  onToggleDate: (ds: string) => void
+  onCycleDate: (ds: string) => void
   onToggleSkipDate: (ds: string) => void
   onUpdate: (ch: Partial<Pick<Habit, 'name' | 'color' | 'icon' | 'skipsPerWeek'>>) => void
   onDelete: () => void
@@ -76,7 +77,7 @@ function SortableCard(props: SortableCardProps) {
 export default function App() {
   const {
     habits, addHabit, updateHabit, deleteHabit, reorderHabits, archiveHabit,
-    toggleToday, toggleDate, toggleSkip, isTodayDone, getCompletions, getSkips,
+    toggleToday, cycleDate, toggleSkip, isTodayDone, getCompletions, getSkips, getFailures,
     exportData, importData,
   } = useHabits()
 
@@ -142,9 +143,10 @@ export default function App() {
                   habit={habit}
                   completions={getCompletions(habit.id)}
                   skips={getSkips(habit.id)}
+                  failures={getFailures(habit.id)}
                   isTodayDone={isTodayDone(habit.id)}
                   onToggleToday={() => toggleToday(habit.id)}
-                  onToggleDate={ds => toggleDate(habit.id, ds)}
+                  onCycleDate={ds => cycleDate(habit.id, ds)}
                   onToggleSkipDate={ds => toggleSkip(habit.id, ds)}
                   onUpdate={ch => updateHabit(habit.id, ch)}
                   onDelete={() => deleteHabit(habit.id)}
@@ -174,9 +176,10 @@ export default function App() {
                       habit={habit}
                       completions={getCompletions(habit.id)}
                       skips={getSkips(habit.id)}
+                      failures={getFailures(habit.id)}
                       isTodayDone={isTodayDone(habit.id)}
                       onToggleToday={() => toggleToday(habit.id)}
-                      onToggleDate={ds => toggleDate(habit.id, ds)}
+                      onCycleDate={ds => cycleDate(habit.id, ds)}
                       onToggleSkipDate={ds => toggleSkip(habit.id, ds)}
                       onUpdate={ch => updateHabit(habit.id, ch)}
                       onDelete={() => deleteHabit(habit.id)}

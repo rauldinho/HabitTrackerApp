@@ -2,6 +2,7 @@ import { useState } from 'react'
 import {
   ChevronDown, ChevronUp, MoreHorizontal, Check,
   GripVertical, Pencil, Archive, ArchiveRestore, Trash2, Minus,
+  Minimize2, Maximize2,
 } from 'lucide-react'
 import { Habit, CompletionEntry } from '../types'
 import { CalendarGrid } from './CalendarGrid'
@@ -18,9 +19,10 @@ interface Props {
   habit: Habit
   completions: Record<string, CompletionEntry>
   skips: Record<string, {}>
+  failures: Record<string, {}>
   isTodayDone: boolean
   onToggleToday: () => void
-  onToggleDate: (dateStr: string) => void
+  onCycleDate: (dateStr: string) => void
   onToggleSkipDate: (dateStr: string) => void
   onUpdate: (ch: Partial<Pick<Habit, 'name' | 'color' | 'icon' | 'skipsPerWeek'>>) => void
   onDelete: () => void
@@ -40,12 +42,13 @@ function bgHex(bg: string): string {
 }
 
 export function HabitCard({
-  habit, completions, skips, isTodayDone,
-  onToggleToday, onToggleDate, onToggleSkipDate,
+  habit, completions, skips, failures, isTodayDone,
+  onToggleToday, onCycleDate, onToggleSkipDate,
   onUpdate, onDelete, onArchive,
   dragHandleProps, isDragging,
 }: Props) {
   const [expanded, setExpanded] = useState(false)
+  const [minimized, setMinimized] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
 
@@ -103,6 +106,58 @@ export function HabitCard({
             }}
           />
         )}
+
+        {/* ── MINIMIZED VIEW ─────────────────────────────────── */}
+        {minimized ? (
+          <>
+            <div className="flex items-center gap-3 relative z-10">
+              <div
+                {...dragHandleProps}
+                className="text-ink/30 hover:text-ink/70 cursor-grab active:cursor-grabbing touch-none flex-shrink-0 transition-colors"
+                title="Drag to reorder"
+              >
+                <GripVertical size={16} strokeWidth={2} />
+              </div>
+              <div
+                className="w-8 h-8 border-2 border-border flex items-center justify-center text-white flex-shrink-0 shadow-hard-sm"
+                style={{ backgroundColor: hex, borderRadius: '8px 4px 8px 4px / 4px 8px 4px 8px' }}
+              >
+                <HabitIcon name={habit.icon} size={15} />
+              </div>
+              <div className="flex-1 min-w-0 overflow-hidden">
+                <p className="font-heading font-bold text-ink text-sm leading-tight truncate">{habit.name}</p>
+              </div>
+              {/* Check button (today) */}
+              <button
+                onClick={handleToggleToday}
+                disabled={isTodaySkipped}
+                className="w-8 h-8 border-2 flex items-center justify-center flex-shrink-0 transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 active:scale-90 disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{
+                  backgroundColor: isTodayDone ? hex : 'var(--color-card)',
+                  borderColor: isTodayDone ? hex : 'var(--color-border)',
+                  color: isTodayDone ? '#fff' : 'var(--color-ink)',
+                  borderRadius: '10px',
+                  boxShadow: isTodayDone ? `2px 2px 0px 0px ${hex}80` : '2px 2px 0px 0px var(--color-border)',
+                  opacity: isTodayDone ? 1 : 0.55,
+                }}
+                title={isTodaySkipped ? 'Day skipped' : isTodayDone ? 'Unmark today' : 'Mark done today'}
+              >
+                <Check size={14} strokeWidth={3} />
+              </button>
+              {/* Maximize button */}
+              <button
+                onClick={() => setMinimized(false)}
+                title="Expand"
+                className="w-8 h-8 border-2 border-border bg-card text-ink/60 flex items-center justify-center flex-shrink-0 hover:bg-ink hover:text-paper hover:border-ink active:scale-90 transition-all duration-100"
+                style={{ borderRadius: '10px', boxShadow: '2px 2px 0px 0px var(--color-border)' }}
+              >
+                <Maximize2 size={12} strokeWidth={2.5} />
+              </button>
+            </div>
+            <WeekBar completions={completions} skips={skips} failures={failures} habitColor={habit.color} createdAt={habit.createdAt} />
+          </>
+        ) : (
+        <>
 
         {/* Top section: icon + name */}
         <div className="flex items-center gap-3 relative z-10">
@@ -179,7 +234,17 @@ export function HabitCard({
             <Check size={16} strokeWidth={3} />
           </button>
 
-          {/* Expand */}
+          {/* Minimize */}
+          <button
+            onClick={() => { setMinimized(true); setExpanded(false) }}
+            title="Minimize"
+            className="w-9 h-9 border-2 border-border bg-card text-ink/60 flex items-center justify-center flex-shrink-0 hover:bg-ink hover:text-paper hover:border-ink hover:-translate-x-0.5 hover:-translate-y-0.5 active:scale-90 transition-all duration-100"
+            style={{ borderRadius: '10px', boxShadow: '2px 2px 0px 0px var(--color-border)' }}
+          >
+            <Minimize2 size={14} strokeWidth={2.5} />
+          </button>
+
+          {/* Expand calendar */}
           <button
             onClick={() => setExpanded(e => !e)}
             className="w-9 h-9 border-2 border-border bg-card text-ink/60 flex items-center justify-center flex-shrink-0 hover:bg-ink hover:text-paper hover:border-ink hover:-translate-x-0.5 hover:-translate-y-0.5 active:scale-90 transition-all duration-100"
@@ -249,7 +314,7 @@ export function HabitCard({
         </div>
 
         {/* 14-day bar */}
-        <WeekBar completions={completions} skips={skips} habitColor={habit.color} createdAt={habit.createdAt} />
+        <WeekBar completions={completions} skips={skips} failures={failures} habitColor={habit.color} createdAt={habit.createdAt} />
 
         {/* Stats */}
         <div className="flex gap-2 mt-3">
@@ -295,11 +360,14 @@ export function HabitCard({
             month={today.getMonth()}
             completions={completions}
             skips={skips}
+            failures={failures}
             habitColor={habit.color}
             createdAt={habit.createdAt}
-            onToggleDate={onToggleDate}
+            onCycleDate={onCycleDate}
           />
         )}
+        </>
+        )} {/* end minimized ternary */}
       </div>
 
       {showEdit && (
