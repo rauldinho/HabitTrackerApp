@@ -104,7 +104,7 @@ export function HabitCard({
           />
         )}
 
-        {/* Top row */}
+        {/* Top section: icon + name */}
         <div className="flex items-center gap-3 relative z-10">
           {/* Drag handle */}
           <div
@@ -126,14 +126,17 @@ export function HabitCard({
             <HabitIcon name={habit.icon} size={18} />
           </div>
 
-          {/* Name + badge */}
-          <div className="flex-1 min-w-0">
-            <p className="font-heading font-bold text-ink text-base leading-tight truncate">
+          {/* Name + badge — full remaining width */}
+          <div className="flex-1 min-w-0 overflow-hidden">
+            <p className="font-heading font-bold text-ink text-base leading-tight line-clamp-2">
               {habit.name}
             </p>
             {current >= 3 && <StreakBadge streak={current} />}
           </div>
+        </div>
 
+        {/* Action buttons row */}
+        <div className="flex items-center gap-2 mt-3 justify-end relative z-10">
           {/* Skip button — only shown if skipsPerWeek > 0 */}
           {habit.skipsPerWeek > 0 && (
             <button
@@ -146,12 +149,12 @@ export function HabitCard({
                     ? `Skip today (${skipsLeft} left this week)`
                     : 'No skips left this week'
               }
-              className="w-9 h-9 border-2 border-border flex items-center justify-center flex-shrink-0 transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 active:scale-90 active:translate-x-0 active:translate-y-0 disabled:opacity-30 disabled:cursor-not-allowed"
+              className="w-9 h-9 border-2 border-border flex items-center justify-center flex-shrink-0 transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed"
               style={{
                 backgroundColor: isTodaySkipped ? 'var(--color-muted)' : 'var(--color-card)',
-                borderRadius: '6px 14px 6px 14px / 14px 6px 14px 6px',
-                boxShadow: isTodaySkipped ? '2px 2px 0px 0px var(--color-border)' : '1px 1px 0px 0px var(--color-border)',
-                color: isTodaySkipped ? 'var(--color-ink)' : 'var(--color-ink)',
+                borderRadius: '10px',
+                boxShadow: '2px 2px 0px 0px var(--color-border)',
+                color: 'var(--color-ink)',
               }}
             >
               <Minus size={14} strokeWidth={2.5} />
@@ -162,25 +165,25 @@ export function HabitCard({
           <button
             onClick={handleToggleToday}
             disabled={isTodaySkipped}
-            className="w-11 h-11 border-2 border-border flex items-center justify-center flex-shrink-0 transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 active:scale-90 active:translate-x-0 active:translate-y-0 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-9 h-9 border-2 flex items-center justify-center flex-shrink-0 transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 active:scale-90 disabled:opacity-40 disabled:cursor-not-allowed"
             style={{
               backgroundColor: isTodayDone ? hex : 'var(--color-card)',
+              borderColor: isTodayDone ? hex : 'var(--color-border)',
               color: isTodayDone ? '#fff' : 'var(--color-ink)',
-              borderRadius: '50% 8px 50% 8px / 8px 50% 8px 50%',
-              boxShadow: isTodayDone ? '3px 3px 0px 0px var(--color-border)' : '2px 2px 0px 0px var(--color-border)',
+              borderRadius: '10px',
+              boxShadow: isTodayDone ? `2px 2px 0px 0px ${hex}80` : '2px 2px 0px 0px var(--color-border)',
+              opacity: isTodayDone ? 1 : 0.55,
             }}
             title={isTodaySkipped ? 'Day skipped' : isTodayDone ? 'Unmark today' : 'Mark done today'}
           >
-            {isTodayDone
-              ? <Check size={18} strokeWidth={3} />
-              : <Circle size={18} strokeWidth={2} />
-            }
+            <Check size={16} strokeWidth={3} />
           </button>
 
           {/* Expand */}
           <button
             onClick={() => setExpanded(e => !e)}
-            className="w-8 h-8 border-2 border-border bg-paper flex items-center justify-center text-ink/60 hover:bg-ink hover:text-paper hover:border-ink hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 wobbly-sm transition-all duration-100 flex-shrink-0"
+            className="w-9 h-9 border-2 border-border bg-card text-ink/60 flex items-center justify-center flex-shrink-0 hover:bg-ink hover:text-paper hover:border-ink hover:-translate-x-0.5 hover:-translate-y-0.5 active:scale-90 transition-all duration-100"
+            style={{ borderRadius: '10px', boxShadow: '2px 2px 0px 0px var(--color-border)' }}
           >
             {expanded
               ? <ChevronUp size={14} strokeWidth={2.5} />
@@ -192,7 +195,8 @@ export function HabitCard({
           <div className="relative flex-shrink-0">
             <button
               onClick={() => setShowMenu(m => !m)}
-              className="w-8 h-8 border-2 border-border bg-paper flex items-center justify-center text-ink/60 hover:bg-ink hover:text-paper hover:border-ink hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 wobbly-sm transition-all duration-100"
+              className="w-9 h-9 border-2 border-border bg-card text-ink/60 flex items-center justify-center hover:bg-ink hover:text-paper hover:border-ink hover:-translate-x-0.5 hover:-translate-y-0.5 active:scale-90 transition-all duration-100"
+              style={{ borderRadius: '10px', boxShadow: '2px 2px 0px 0px var(--color-border)' }}
             >
               <MoreHorizontal size={14} strokeWidth={2.5} />
             </button>

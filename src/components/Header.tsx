@@ -32,12 +32,11 @@ export function Header({ onExport, onImport, darkMode, onToggleDark }: Props) {
       <div className="flex items-start justify-between">
         {/* Brand mark */}
         <div className="flex items-center gap-2.5">
-          <div
-            className="w-10 h-10 bg-ink flex items-center justify-center flex-shrink-0 shadow-hard-sm"
-            style={{ borderRadius: '10px 4px 10px 4px / 4px 10px 4px 10px' }}
-          >
-            <span className="text-paper font-heading font-bold text-sm leading-none tracking-tight">HT</span>
-          </div>
+          <img
+            src="/favicon.svg"
+            alt="Habit Tracker logo"
+            className="w-10 h-10 flex-shrink-0"
+          />
           <div>
             <h1
               className="font-heading text-2xl font-bold text-ink leading-none"

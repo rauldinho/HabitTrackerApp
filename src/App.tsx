@@ -195,14 +195,14 @@ export default function App() {
         onClick={() => setShowAdd(true)}
         className="
           fixed bottom-6 right-5 w-14 h-14
-          bg-ink text-paper border-2 border-border shadow-hard-lg
+          bg-card text-ink border-2 border-border shadow-hard-lg
           flex items-center justify-center
-          hover:bg-accent hover:border-accent hover:text-white
+          hover:bg-ink hover:text-paper hover:border-ink
           hover:shadow-hard hover:-translate-x-0.5 hover:-translate-y-0.5
           active:shadow-none active:translate-x-1 active:translate-y-1
           transition-all duration-100
         "
-        style={{ borderRadius: '50% 8px 50% 8px / 8px 50% 8px 50%' }}
+        style={{ borderRadius: '8px 20px 8px 20px / 20px 8px 20px 8px' }}
         title="Add habit"
       >
         <Plus size={24} strokeWidth={3} />
