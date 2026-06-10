@@ -53,10 +53,8 @@ export function WeekBar({ completions, skips = {}, failures = {}, habitColor, cr
         let opacity = '1'
         let title = dateStr
 
-        if (beforeCreation) {
-          bg = 'var(--color-muted)'
-          opacity = '0.3'
-        } else if (done) {
+        // Explicit states (done/failed/skipped) always take priority over beforeCreation
+        if (done) {
           bg = doneColor
           title = `${dateStr} ✓`
         } else if (failed) {
@@ -67,6 +65,9 @@ export function WeekBar({ completions, skips = {}, failures = {}, habitColor, cr
           bg = 'var(--color-muted)'
           opacity = '0.7'
           title = `${dateStr} — skipped`
+        } else if (beforeCreation) {
+          bg = 'var(--color-muted)'
+          opacity = '0.3'
         } else if (missed) {
           bg = missedColor
           opacity = '0.5'

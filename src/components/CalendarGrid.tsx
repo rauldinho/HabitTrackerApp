@@ -70,7 +70,8 @@ export function CalendarGrid({
 
           let bg          = 'transparent'
           let textColor   = 'var(--color-ink)'
-          let opacity     = future || beforeCreation ? '0.25' : '1'
+          // Explicit states override the beforeCreation fade — only fade truly unmarked past-creation days
+          let opacity     = future || (beforeCreation && !done && !failed && !skipped) ? '0.25' : '1'
           let borderStyle = '1px dashed var(--color-border)'
           let shadow      = 'none'
 
