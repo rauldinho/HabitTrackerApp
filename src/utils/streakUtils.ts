@@ -19,6 +19,8 @@ export function calcStreaks(
   const todayDone = today in completions
 
   // ── Current streak: walk backward from today ────────────────
+  // Note: we intentionally do NOT stop at createdAt — the user may have
+  // retroactively marked days before creation as done, and those should count.
   let current = 0
   const cursor = new Date(parseDateStr(today))
   if (!todayDone) {
@@ -26,21 +28,27 @@ export function calcStreaks(
   }
   while (true) {
     const ds = formatDateStr(cursor)
-    if (ds < createdAt) break
     if (ds in completions) {
       current++
     } else if (skips && ds in skips) {
       // transparent skip — pass through without breaking or counting
+    } else if (ds >= createdAt) {
+      break // genuine miss on an active day
     } else {
-      break // missed
+      break // before habit creation with no completion — stop gracefully
     }
     cursor.setDate(cursor.getDate() - 1)
   }
 
-  // ── Longest streak: walk forward from creation to today ─────
+  // ── Longest streak: walk forward from earliest completion or createdAt ─
+  // Start from whichever is earlier: createdAt or the earliest retroactive completion.
+  const allDates = Object.keys(completions)
+  const earliestCompletion = allDates.length > 0 ? allDates.reduce((a, b) => a < b ? a : b) : createdAt
+  const startDate = earliestCompletion < createdAt ? earliestCompletion : createdAt
+
   let longest = 0
   let run = 0
-  const walker = new Date(parseDateStr(createdAt))
+  const walker = new Date(parseDateStr(startDate))
   const end = parseDateStr(today)
   while (walker <= end) {
     const ds = formatDateStr(walker)
@@ -48,8 +56,8 @@ export function calcStreaks(
       run++
       longest = Math.max(longest, run)
     } else if (skips && ds in skips) {
-      // transparent skip — pass through without breaking or counting
-    } else if (ds < today) {
+      // transparent skip
+    } else if (ds < today && ds >= startDate) {
       run = 0 // missed
     }
     walker.setDate(walker.getDate() + 1)

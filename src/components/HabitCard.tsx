@@ -1,4 +1,36 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
+
+const UI_STORAGE_KEY = 'habit-tracker-ui-v1'
+
+function readUIState(): Record<string, { minimized?: boolean }> {
+  try {
+    const raw = localStorage.getItem(UI_STORAGE_KEY)
+    return raw ? JSON.parse(raw) : {}
+  } catch {
+    return {}
+  }
+}
+
+function writeUIState(habitId: string, patch: { minimized?: boolean }) {
+  try {
+    const ui = readUIState()
+    ui[habitId] = { ...ui[habitId], ...patch }
+    localStorage.setItem(UI_STORAGE_KEY, JSON.stringify(ui))
+  } catch {}
+}
+
+function usePersistedMinimized(habitId: string) {
+  const [minimized, setMinimizedState] = useState<boolean>(() => {
+    return readUIState()[habitId]?.minimized ?? false
+  })
+
+  const setMinimized = useCallback((value: boolean) => {
+    setMinimizedState(value)
+    writeUIState(habitId, { minimized: value })
+  }, [habitId])
+
+  return [minimized, setMinimized] as const
+}
 import {
   ChevronDown, ChevronUp, MoreHorizontal, Check,
   GripVertical, Pencil, Archive, ArchiveRestore, Trash2, Minus,
@@ -31,6 +63,33 @@ interface Props {
   isDragging?: boolean
 }
 
+/** Styled tooltip wrapper — shows label above the child on hover */
+function Tip({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="relative group/tip flex-shrink-0">
+      {children}
+      <div
+        className="
+          pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2
+          px-2 py-1 whitespace-nowrap
+          font-body text-[11px] font-semibold text-paper bg-ink border border-border
+          opacity-0 group-hover/tip:opacity-100
+          translate-y-1 group-hover/tip:translate-y-0
+          transition-all duration-150 z-50
+        "
+        style={{ borderRadius: '4px 8px 4px 8px / 8px 4px 8px 4px', boxShadow: '2px 2px 0px 0px var(--color-border)' }}
+      >
+        {label}
+        {/* Arrow */}
+        <div
+          className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0"
+          style={{ borderLeft: '5px solid transparent', borderRight: '5px solid transparent', borderTop: '5px solid var(--color-ink)' }}
+        />
+      </div>
+    </div>
+  )
+}
+
 /** Map bg class → hex for icon tile background */
 function bgHex(bg: string): string {
   const m: Record<string, string> = {
@@ -48,7 +107,7 @@ export function HabitCard({
   dragHandleProps, isDragging,
 }: Props) {
   const [expanded, setExpanded] = useState(false)
-  const [minimized, setMinimized] = useState(false)
+  const [minimized, setMinimized] = usePersistedMinimized(habit.id)
   const [showMenu, setShowMenu] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
 
@@ -194,77 +253,77 @@ export function HabitCard({
         <div className="flex items-center gap-2 mt-3 justify-end relative z-10 pr-16">
           {/* Skip button — only shown if skipsPerWeek > 0 */}
           {habit.skipsPerWeek > 0 && (
-            <button
-              onClick={handleSkipToday}
-              disabled={!canSkipToday && !isTodaySkipped}
-              title={
-                isTodaySkipped
-                  ? 'Un-skip today'
-                  : canSkipToday
-                    ? `Skip today (${skipsLeft} left this week)`
-                    : 'No skips left this week'
-              }
-              className="w-9 h-9 border-2 border-border flex items-center justify-center flex-shrink-0 transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed"
-              style={{
-                backgroundColor: isTodaySkipped ? 'var(--color-muted)' : 'var(--color-card)',
-                borderRadius: '10px',
-                boxShadow: '2px 2px 0px 0px var(--color-border)',
-                color: 'var(--color-ink)',
-              }}
-            >
-              <Minus size={14} strokeWidth={2.5} />
-            </button>
+            <Tip label={isTodaySkipped ? 'Un-skip today' : canSkipToday ? `Skip today (${skipsLeft} left)` : 'No skips left'}>
+              <button
+                onClick={handleSkipToday}
+                disabled={!canSkipToday && !isTodaySkipped}
+                className="w-9 h-9 border-2 border-border flex items-center justify-center transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed"
+                style={{
+                  backgroundColor: isTodaySkipped ? 'var(--color-muted)' : 'var(--color-card)',
+                  borderRadius: '10px',
+                  boxShadow: '2px 2px 0px 0px var(--color-border)',
+                  color: 'var(--color-ink)',
+                }}
+              >
+                <Minus size={14} strokeWidth={2.5} />
+              </button>
+            </Tip>
           )}
 
           {/* Check button */}
-          <button
-            onClick={handleToggleToday}
-            disabled={isTodaySkipped}
-            className="w-9 h-9 border-2 flex items-center justify-center flex-shrink-0 transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 active:scale-90 disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{
-              backgroundColor: isTodayDone ? hex : 'var(--color-card)',
-              borderColor: isTodayDone ? hex : 'var(--color-border)',
-              color: isTodayDone ? '#fff' : 'var(--color-ink)',
-              borderRadius: '10px',
-              boxShadow: isTodayDone ? `2px 2px 0px 0px ${hex}80` : '2px 2px 0px 0px var(--color-border)',
-              opacity: isTodayDone ? 1 : 0.55,
-            }}
-            title={isTodaySkipped ? 'Day skipped' : isTodayDone ? 'Unmark today' : 'Mark done today'}
-          >
-            <Check size={16} strokeWidth={3} />
-          </button>
+          <Tip label={isTodaySkipped ? 'Day skipped' : isTodayDone ? 'Unmark today' : 'Mark done today'}>
+            <button
+              onClick={handleToggleToday}
+              disabled={isTodaySkipped}
+              className="w-9 h-9 border-2 flex items-center justify-center transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 active:scale-90 disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{
+                backgroundColor: isTodayDone ? hex : 'var(--color-card)',
+                borderColor: isTodayDone ? hex : 'var(--color-border)',
+                color: isTodayDone ? '#fff' : 'var(--color-ink)',
+                borderRadius: '10px',
+                boxShadow: isTodayDone ? `2px 2px 0px 0px ${hex}80` : '2px 2px 0px 0px var(--color-border)',
+                opacity: isTodayDone ? 1 : 0.55,
+              }}
+            >
+              <Check size={16} strokeWidth={3} />
+            </button>
+          </Tip>
 
           {/* Minimize */}
-          <button
-            onClick={() => { setMinimized(true); setExpanded(false) }}
-            title="Minimize"
-            className="w-9 h-9 border-2 border-border bg-card text-ink/60 flex items-center justify-center flex-shrink-0 hover:bg-ink hover:text-paper hover:border-ink hover:-translate-x-0.5 hover:-translate-y-0.5 active:scale-90 transition-all duration-100"
-            style={{ borderRadius: '10px', boxShadow: '2px 2px 0px 0px var(--color-border)' }}
-          >
-            <Minimize2 size={14} strokeWidth={2.5} />
-          </button>
-
-          {/* Expand calendar */}
-          <button
-            onClick={() => setExpanded(e => !e)}
-            className="w-9 h-9 border-2 border-border bg-card text-ink/60 flex items-center justify-center flex-shrink-0 hover:bg-ink hover:text-paper hover:border-ink hover:-translate-x-0.5 hover:-translate-y-0.5 active:scale-90 transition-all duration-100"
-            style={{ borderRadius: '10px', boxShadow: '2px 2px 0px 0px var(--color-border)' }}
-          >
-            {expanded
-              ? <ChevronUp size={14} strokeWidth={2.5} />
-              : <ChevronDown size={14} strokeWidth={2.5} />
-            }
-          </button>
-
-          {/* Menu */}
-          <div className="relative flex-shrink-0">
+          <Tip label="Minimize">
             <button
-              onClick={() => setShowMenu(m => !m)}
+              onClick={() => { setMinimized(true); setExpanded(false) }}
               className="w-9 h-9 border-2 border-border bg-card text-ink/60 flex items-center justify-center hover:bg-ink hover:text-paper hover:border-ink hover:-translate-x-0.5 hover:-translate-y-0.5 active:scale-90 transition-all duration-100"
               style={{ borderRadius: '10px', boxShadow: '2px 2px 0px 0px var(--color-border)' }}
             >
-              <MoreHorizontal size={14} strokeWidth={2.5} />
+              <Minimize2 size={14} strokeWidth={2.5} />
             </button>
+          </Tip>
+
+          {/* Expand calendar */}
+          <Tip label={expanded ? 'Hide calendar' : 'Show calendar'}>
+            <button
+              onClick={() => setExpanded(e => !e)}
+              className="w-9 h-9 border-2 border-border bg-card text-ink/60 flex items-center justify-center hover:bg-ink hover:text-paper hover:border-ink hover:-translate-x-0.5 hover:-translate-y-0.5 active:scale-90 transition-all duration-100"
+              style={{ borderRadius: '10px', boxShadow: '2px 2px 0px 0px var(--color-border)' }}
+            >
+              {expanded
+                ? <ChevronUp size={14} strokeWidth={2.5} />
+                : <ChevronDown size={14} strokeWidth={2.5} />
+              }
+            </button>
+          </Tip>
+
+          {/* Menu */}
+          <Tip label="More options">
+            <div className="relative">
+              <button
+                onClick={() => setShowMenu(m => !m)}
+                className="w-9 h-9 border-2 border-border bg-card text-ink/60 flex items-center justify-center hover:bg-ink hover:text-paper hover:border-ink hover:-translate-x-0.5 hover:-translate-y-0.5 active:scale-90 transition-all duration-100"
+                style={{ borderRadius: '10px', boxShadow: '2px 2px 0px 0px var(--color-border)' }}
+              >
+                <MoreHorizontal size={14} strokeWidth={2.5} />
+              </button>
             {showMenu && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
@@ -310,7 +369,8 @@ export function HabitCard({
                 </div>
               </>
             )}
-          </div>
+            </div>
+          </Tip>
         </div>
 
         {/* 14-day bar */}
