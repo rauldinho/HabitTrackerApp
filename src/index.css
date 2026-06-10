@@ -1,0 +1,63 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Design tokens ─────────────────────────────────────────── */
+:root {
+  --color-paper:     #fdfbf7;
+  --color-ink:       #2d2d2d;
+  --color-muted:     #e5e0d8;
+  --color-accent:    #ff4d4d;
+  --color-secondary: #2d5da1;
+  --color-card:      #ffffff;
+  --color-card-alt:  #fff9c4;
+  --color-border:    #2d2d2d;
+}
+
+.dark {
+  --color-paper:     #1a1713;
+  --color-ink:       #f0ece4;
+  --color-muted:     #2e2a24;
+  --color-accent:    #ff6666;
+  --color-secondary: #6b9fd4;
+  --color-card:      #242018;
+  --color-card-alt:  #2e2a18;
+  --color-border:    #7a7268;
+}
+
+/* ── Base ──────────────────────────────────────────────────── */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: 'Patrick Hand', cursive;
+  overscroll-behavior-y: none;
+  /* Dot-grid paper texture */
+  background-image: radial-gradient(var(--color-muted) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* ── Wobbly border utilities ───────────────────────────────── */
+@layer utilities {
+  .wobbly {
+    border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  }
+  .wobbly-alt {
+    border-radius: 15px 255px 15px 225px / 225px 15px 255px 15px;
+  }
+  .wobbly-btn {
+    border-radius: 20px 5px 20px 5px / 5px 20px 5px 20px;
+  }
+  .wobbly-sm {
+    border-radius: 8px 30px 8px 30px / 30px 8px 30px 8px;
+  }
+  .wobbly-pill {
+    border-radius: 30px 8px 30px 8px / 8px 30px 8px 30px;
+  }
+  .wobbly-card {
+    border-radius: 12px 180px 12px 180px / 180px 12px 180px 12px;
+  }
+}
