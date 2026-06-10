@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import {
-  ChevronDown, ChevronUp, MoreHorizontal, Check, Circle,
+  ChevronDown, ChevronUp, MoreHorizontal, Check,
   GripVertical, Pencil, Archive, ArchiveRestore, Trash2, Minus,
 } from 'lucide-react'
 import { Habit, CompletionEntry } from '../types'
