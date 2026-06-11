@@ -93,9 +93,12 @@ function Tip({ label, children }: { label: string; children: React.ReactNode }) 
 /** Map bg class → hex for icon tile background */
 function bgHex(bg: string): string {
   const m: Record<string, string> = {
-    'bg-red-500':'#ef4444','bg-orange-500':'#f97316','bg-yellow-400':'#facc15',
-    'bg-green-500':'#22c55e','bg-teal-500':'#14b8a6','bg-blue-500':'#3b82f6',
-    'bg-violet-500':'#8b5cf6','bg-pink-500':'#ec4899',
+    'bg-orange-500':'#f97316','bg-amber-500':'#f59e0b','bg-yellow-400':'#facc15',
+    'bg-lime-500':'#84cc16','bg-green-500':'#22c55e','bg-emerald-500':'#10b981',
+    'bg-teal-500':'#14b8a6','bg-cyan-500':'#06b6d4','bg-sky-500':'#0ea5e9',
+    'bg-blue-500':'#3b82f6','bg-indigo-500':'#6366f1','bg-violet-500':'#8b5cf6',
+    'bg-purple-500':'#a855f7','bg-fuchsia-500':'#d946ef','bg-pink-500':'#ec4899',
+    'bg-rose-500':'#f43f5e',
   }
   return m[bg] ?? '#6b7280'
 }
