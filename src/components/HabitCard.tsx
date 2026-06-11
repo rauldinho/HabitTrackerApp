@@ -172,7 +172,7 @@ export function HabitCard({
         {/* ── MINIMIZED VIEW ─────────────────────────────────── */}
         {minimized ? (
           <>
-            <div className="flex items-center gap-3 relative z-10">
+            <div className="flex items-center gap-2 relative z-10">
               <div
                 {...dragHandleProps}
                 className="text-ink/30 hover:text-ink/70 cursor-grab active:cursor-grabbing touch-none flex-shrink-0 transition-colors"
@@ -189,10 +189,12 @@ export function HabitCard({
               <div className="flex-1 min-w-0 overflow-hidden">
                 <p className="font-heading font-bold text-ink text-sm leading-tight truncate">{habit.name}</p>
               </div>
-              {/* Check button (today) */}
+
+              {/* Check button */}
               <button
                 onClick={handleToggleToday}
                 disabled={isTodaySkipped}
+                title={isTodaySkipped ? 'Day skipped' : isTodayDone ? 'Unmark today' : 'Mark done today'}
                 className="w-8 h-8 border-2 flex items-center justify-center flex-shrink-0 transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 active:scale-90 disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{
                   backgroundColor: isTodayDone ? hex : 'var(--color-card)',
@@ -202,10 +204,10 @@ export function HabitCard({
                   boxShadow: isTodayDone ? `2px 2px 0px 0px ${hex}80` : '2px 2px 0px 0px var(--color-border)',
                   opacity: isTodayDone ? 1 : 0.55,
                 }}
-                title={isTodaySkipped ? 'Day skipped' : isTodayDone ? 'Unmark today' : 'Mark done today'}
               >
                 <Check size={14} strokeWidth={3} />
               </button>
+
               {/* Maximize button */}
               <button
                 onClick={() => setMinimized(false)}
@@ -221,8 +223,8 @@ export function HabitCard({
         ) : (
         <>
 
-        {/* Top section: icon + name */}
-        <div className="flex items-center gap-3 relative z-10">
+        {/* Top section: icon + name + check + minimize */}
+        <div className="flex items-center gap-2 relative z-10">
           {/* Drag handle */}
           <div
             {...dragHandleProps}
@@ -250,10 +252,40 @@ export function HabitCard({
             </p>
             {current >= 3 && <StreakBadge streak={current} />}
           </div>
+
+          {/* Check button — top-right corner */}
+          <Tip label={isTodaySkipped ? 'Day skipped' : isTodayDone ? 'Unmark today' : 'Mark done today'}>
+            <button
+              onClick={handleToggleToday}
+              disabled={isTodaySkipped}
+              className="w-8 h-8 border-2 flex items-center justify-center flex-shrink-0 transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 active:scale-90 disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{
+                backgroundColor: isTodayDone ? hex : 'var(--color-card)',
+                borderColor: isTodayDone ? hex : 'var(--color-border)',
+                color: isTodayDone ? '#fff' : 'var(--color-ink)',
+                borderRadius: '10px',
+                boxShadow: isTodayDone ? `2px 2px 0px 0px ${hex}80` : '2px 2px 0px 0px var(--color-border)',
+                opacity: isTodayDone ? 1 : 0.55,
+              }}
+            >
+              <Check size={14} strokeWidth={3} />
+            </button>
+          </Tip>
+
+          {/* Minimize button — top-right corner */}
+          <Tip label="Minimize">
+            <button
+              onClick={() => { setMinimized(true); setExpanded(false) }}
+              className="w-8 h-8 border-2 border-border bg-card text-ink/60 flex items-center justify-center flex-shrink-0 hover:bg-ink hover:text-paper hover:border-ink active:scale-90 transition-all duration-100"
+              style={{ borderRadius: '10px', boxShadow: '2px 2px 0px 0px var(--color-border)' }}
+            >
+              <Minimize2 size={14} strokeWidth={2.5} />
+            </button>
+          </Tip>
         </div>
 
-        {/* Action buttons row — pr accounts for FAB so buttons don't hide behind it */}
-        <div className="flex items-center gap-2 mt-3 justify-end relative z-10 pr-16">
+        {/* Action buttons row — skip / calendar / menu */}
+        <div className="flex items-center gap-2 mt-3 justify-end relative z-10">
           {/* Skip button — only shown if skipsPerWeek > 0 */}
           {habit.skipsPerWeek > 0 && (
             <Tip label={isTodaySkipped ? 'Un-skip today' : canSkipToday ? `Skip today (${skipsLeft} left)` : 'No skips left'}>
@@ -272,36 +304,6 @@ export function HabitCard({
               </button>
             </Tip>
           )}
-
-          {/* Check button */}
-          <Tip label={isTodaySkipped ? 'Day skipped' : isTodayDone ? 'Unmark today' : 'Mark done today'}>
-            <button
-              onClick={handleToggleToday}
-              disabled={isTodaySkipped}
-              className="w-9 h-9 border-2 flex items-center justify-center transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 active:scale-90 disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{
-                backgroundColor: isTodayDone ? hex : 'var(--color-card)',
-                borderColor: isTodayDone ? hex : 'var(--color-border)',
-                color: isTodayDone ? '#fff' : 'var(--color-ink)',
-                borderRadius: '10px',
-                boxShadow: isTodayDone ? `2px 2px 0px 0px ${hex}80` : '2px 2px 0px 0px var(--color-border)',
-                opacity: isTodayDone ? 1 : 0.55,
-              }}
-            >
-              <Check size={16} strokeWidth={3} />
-            </button>
-          </Tip>
-
-          {/* Minimize */}
-          <Tip label="Minimize">
-            <button
-              onClick={() => { setMinimized(true); setExpanded(false) }}
-              className="w-9 h-9 border-2 border-border bg-card text-ink/60 flex items-center justify-center hover:bg-ink hover:text-paper hover:border-ink hover:-translate-x-0.5 hover:-translate-y-0.5 active:scale-90 transition-all duration-100"
-              style={{ borderRadius: '10px', boxShadow: '2px 2px 0px 0px var(--color-border)' }}
-            >
-              <Minimize2 size={14} strokeWidth={2.5} />
-            </button>
-          </Tip>
 
           {/* Expand calendar */}
           <Tip label={expanded ? 'Hide calendar' : 'Show calendar'}>
